@@ -9,19 +9,26 @@ class FlipCounter {
    * @param {string} rootElementSelector Unique root element insert the flip counter.
    */
   constructor(countToDate, rootElementSelector) {
+    this.uniqueKey = this.getUniqueKey(rootElementSelector);
+
     setInterval(() => {
 
       const currentDate = new Date();
-      const timeBetweenDates = Math.ceil((countToDate - currentDate) / 1000);
+      const timeRemaining = Math.ceil((countToDate - currentDate) / 1000);
 
-      this.uniqueKey = this.getUniqueKey(rootElementSelector);
+
       this.renderHtmlTemplate(rootElementSelector, this.uniqueKey);
 
-      this.invoke(timeBetweenDates, rootElementSelector);
+      this.invoke(timeRemaining);
     }, 250);
   }
 
-  invoke(time, rootElementSelector) {
+  /**
+   * Invoke class handler. 
+   * 
+   * @param {number} time Date tim in number format.
+   */
+  invoke(time) {
     const seconds = time % 60;
     const minutes = Math.floor(time / 60) % 60;
     const hours = Math.floor(time / (60 * 60)) % 24;
@@ -34,6 +41,8 @@ class FlipCounter {
     } else {
       this.getSegment(this.uniqueKey, 'days', 'ones')
         .parentElement.parentElement.style.display = 'none';
+
+      document.querySelector(`.separator.hours`).style.display = 'none';
     }
 
     this.flip(this.getSegment(this.uniqueKey, 'hours', 'tens'), Math.floor(hours / 10));
@@ -44,7 +53,17 @@ class FlipCounter {
 
     this.flip(this.getSegment(this.uniqueKey, 'seconds', 'tens'), Math.floor(seconds / 10));
     this.flip(this.getSegment(this.uniqueKey, 'seconds', 'ones'), seconds % 10);
+  }
 
+  /**
+   * Get unique key with the identifier. 
+   * 
+   * @param {string} identifier Poluted string to convert.
+   * 
+   * @returns string
+   */
+  getUniqueKey(identifier) {
+    return identifier.replace(/[^a-z]/gi, '').toLowerCase();
   }
 
   /**
@@ -100,17 +119,7 @@ class FlipCounter {
   }
 
   /**
-   * Get unique key with the identifier. 
-   * 
-   * @param {string} identifier Poluted string to convert.
-   * 
-   * @returns string
-   */
-  getUniqueKey(identifier) {
-    return identifier.replace(/[^a-z]/gi, '').toLowerCase();
-  }
-
-  /**
+   * Render html template.
    * 
    * @param {string} flipCounterRoot Root element to render flip counter.
    * @param {string} uniqueKey Unique key identifire.
@@ -140,21 +149,29 @@ class FlipCounter {
     const container = document.createElement('div');
     container.classList.add('counter-container');
 
-    segmentsData.map((segment) => {
+    segmentsData.map((segment, idx) => {
       const createdSegment = document.createElement('div');
       createdSegment.classList.add('counter-container-segment');
 
-      createdSegment.innerHTML = `<div class="counter-segment-title">${segment.label}</div>` +
+      createdSegment.innerHTML = `<div class="counter-segment-label">${segment.label}</div>` +
         `<div class="counter-segment">` +
         `<div class="flip-card" data-${uniqueKey}-${segment.type}-tens>` +
-        `<div class="top">3</div>` +
-        `<div class="bottom">3</div>` +
+        `<div class="top">0</div>` +
+        `<div class="bottom">0</div>` +
         `</div>` +
         `<div class="flip-card" data-${uniqueKey}-${segment.type}-ones>` +
         `<div class="top">0</div>` +
         `<div class="bottom">0</div>` +
         `</div>` +
         `</div>`;
+
+      const separatorNode = document.createElement('div');
+      separatorNode.classList.add(`${segment.type}`, 'separator');
+      separatorNode.textContent = ':';
+
+      if (idx > 0) {
+        container.appendChild(separatorNode);
+      }
 
       return container.appendChild(createdSegment);
     })
